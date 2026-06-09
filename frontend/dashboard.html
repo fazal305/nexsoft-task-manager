@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TaskFlow | Dashboard</title>
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="dashboard-layout">
+    <aside class="sidebar">
+      <h2>TaskFlow</h2>
+      <p>Nexsoft Task Manager</p>
+
+      <nav>
+        <a href="dashboard.html" class="active">Dashboard</a>
+        <a href="workspace.html">Workspace</a>
+        <a href="task.html">My Tasks</a>
+      </nav>
+
+      <button id="logoutBtn" class="danger-btn">Logout</button>
+    </aside>
+
+    <section class="dashboard-main">
+      <header class="dashboard-header">
+        <div>
+          <p class="eyebrow">Workspace Overview</p>
+          <h1>Dashboard</h1>
+        </div>
+
+        <div class="user-pill" id="userPill">Loading...</div>
+      </header>
+
+      <section class="stats-grid">
+        <article class="stat-card">
+          <span>Total Workspaces</span>
+          <strong id="workspaceCount">0</strong>
+        </article>
+
+        <article class="stat-card">
+          <span>Total Projects</span>
+          <strong id="projectCount">0</strong>
+        </article>
+
+        <article class="stat-card">
+          <span>Assigned To Me</span>
+          <strong id="myTaskCount">0</strong>
+        </article>
+      </section>
+
+      <section class="content-panel">
+        <div class="section-heading">
+          <h2>Create Workspace</h2>
+        </div>
+
+        <form id="createWorkspaceForm">
+          <label class="form-label">Workspace Name</label>
+          <input id="workspaceNameInput" class="task-input" type="text" placeholder="Example: Nexsoft Team" required>
+
+          <label class="form-label">Description</label>
+          <textarea id="workspaceDescriptionInput" class="task-input" rows="3" placeholder="Short workspace description"></textarea>
+
+          <button class="primary-small-btn" type="submit">Create Workspace</button>
+        </form>
+      </section>
+
+      <section class="content-panel">
+        <div class="section-heading">
+          <h2>Your Workspaces</h2>
+          <p class="muted-text">Click a workspace to load its projects.</p>
+        </div>
+
+        <div id="workspaceList" class="card-grid">
+          <p class="muted-text">Loading workspaces...</p>
+        </div>
+      </section>
+
+      <section class="content-panel">
+        <div class="section-heading">
+          <h2>Create Project</h2>
+        </div>
+
+        <form id="createProjectForm">
+          <label class="form-label">Select Workspace</label>
+          <select id="projectWorkspaceInput" class="task-input" required>
+            <option value="">Choose workspace</option>
+          </select>
+
+          <label class="form-label">Project Name</label>
+          <input id="projectNameInput" class="task-input" type="text" placeholder="Example: Website Redesign" required>
+
+          <label class="form-label">Description</label>
+          <textarea id="projectDescriptionInput" class="task-input" rows="3" placeholder="Project description"></textarea>
+
+          <div class="two-column-form">
+            <div>
+              <label class="form-label">Color</label>
+              <input id="projectColorInput" class="task-input" type="color" value="#00f5ff">
+            </div>
+
+            <div>
+              <label class="form-label">Status</label>
+              <select id="projectStatusInput" class="task-input">
+                <option value="active">Active</option>
+                <option value="on_hold">On Hold</option>
+                <option value="completed">Completed</option>
+                <option value="archived">Archived</option>
+              </select>
+            </div>
+          </div>
+
+          <button class="primary-small-btn" type="submit">Create Project</button>
+        </form>
+      </section>
+
+      <section class="content-panel">
+        <div class="section-heading">
+          <h2>Projects</h2>
+          <p class="muted-text">Click a project to open its Kanban board.</p>
+        </div>
+
+        <div id="projectList" class="card-grid"></div>
+      </section>
+    </section>
+  </main>
+
+  <div id="toast" class="toast-message"></div>
+
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

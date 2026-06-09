@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TaskFlow | Task Detail</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="dashboard-layout">
+    <aside class="sidebar">
+      <h2>TaskFlow</h2>
+      <p>Task Detail</p>
+      <nav>
+        <a href="dashboard.html">Dashboard</a>
+        <a href="workspace.html">Workspace</a>
+        <a href="task.html" class="active">Task Detail</a>
+      </nav>
+      <button id="logoutBtn" class="danger-btn">Logout</button>
+    </aside>
+
+    <section class="dashboard-main">
+      <header class="dashboard-header">
+        <div>
+          <p class="eyebrow">Task Information</p>
+          <h1 id="taskTitle">Loading...</h1>
+        </div>
+        <div class="user-pill" id="userPill">Loading...</div>
+      </header>
+
+      <section class="task-detail-grid">
+        <article class="content-panel">
+          <h2>Details</h2>
+
+          <label class="form-label">Title</label>
+          <input id="taskTitleInput" class="task-input" type="text">
+
+          <label class="form-label">Description</label>
+          <textarea id="taskDescriptionInput" class="task-input" rows="6"></textarea>
+
+          <div class="two-column-form">
+            <div>
+              <label class="form-label">Status</label>
+              <select id="taskStatusInput" class="task-input">
+                <option value="todo">To Do</option>
+                <option value="in_progress">In Progress</option>
+                <option value="review">Review</option>
+                <option value="done">Done</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="form-label">Priority</label>
+              <select id="taskPriorityInput" class="task-input">
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+                <option value="urgent">Urgent</option>
+              </select>
+            </div>
+          </div>
+
+          <label class="form-label">Assign Members</label>
+          <div id="assigneeList" class="assignee-list">
+            <p class="muted-text">Loading members...</p>
+          </div>
+
+          <div class="d-flex gap-2 mt-3">
+            <button id="updateTaskBtn" class="primary-small-btn">Save Changes</button>
+            <button id="deleteTaskBtn" class="danger-btn" style="width:auto;">Delete Task</button>
+          </div>
+        </article>
+
+        <article class="content-panel">
+          <h2>Comments</h2>
+
+          <div id="commentList" class="comment-list">
+            <p class="muted-text">Loading comments...</p>
+          </div>
+
+          <form id="commentForm" class="comment-form">
+            <textarea id="commentInput" class="task-input" rows="3" placeholder="Write a comment..."></textarea>
+            <button class="primary-small-btn" type="submit">Add Comment</button>
+          </form>
+
+          <hr class="panel-divider">
+
+          <h2>Activity</h2>
+          <div id="activityList" class="activity-list"></div>
+        </article>
+      </section>
+    </section>
+  </main>
+
+  <div id="toast" class="toast-message"></div>
+
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
