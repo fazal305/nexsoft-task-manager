@@ -1,4 +1,4 @@
-const API_BASE = 'http://localhost:5000/api';
+const API_BASE = 'https://nexsoft-task-manager.onrender.com/api';
 
 let selectedWorkspaceId = null;
 let draggedTaskId = null;
