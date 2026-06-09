@@ -4,8 +4,8 @@ A full stack task management system built for Nexsoft Solutions Internship.
 
 ## Live Demo
 
-Frontend: Coming soon  
-Backend API: Coming soon  
+Frontend: https://nexsoft-task-manager.netlify.app/  
+Backend API: https://nexsoft-task-manager.onrender.com/
 
 ## Features
 
