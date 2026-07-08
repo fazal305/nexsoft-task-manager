@@ -3,8 +3,17 @@ const API_BASE = 'https://nexsoft-task-manager.onrender.com/api';
 let selectedWorkspaceId = null;
 let draggedTaskId = null;
 
+function escapeHtml(value) {
+  return String(value || '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#039;');
+}
+
 function showToast(message) {
-  $('#toast').text(message).addClass('show');
+  $('#toast').text(message || 'Something happened').addClass('show');
   setTimeout(() => $('#toast').removeClass('show'), 2600);
 }
 
@@ -13,7 +22,13 @@ function getToken() {
 }
 
 function getUser() {
-  return JSON.parse(localStorage.getItem('taskflowUser') || 'null');
+  try {
+    const user = localStorage.getItem('taskflowUser');
+    return user ? JSON.parse(user) : null;
+  } catch {
+    localStorage.removeItem('taskflowUser');
+    return null;
+  }
 }
 
 function saveAuth(token, user) {
@@ -43,22 +58,28 @@ async function apiCall(endpoint, method = 'GET', body = null) {
     }
   };
 
-  if (getToken()) {
-    options.headers.Authorization = `Bearer ${getToken()}`;
+  const token = getToken();
+
+  if (token) {
+    options.headers.Authorization = `Bearer ${token}`;
   }
 
   if (body) {
     options.body = JSON.stringify(body);
   }
 
-  const response = await fetch(`${API_BASE}${endpoint}`, options);
-  const data = await response.json();
+  try {
+    const response = await fetch(`${API_BASE}${endpoint}`, options);
+    const data = await response.json();
 
-  if (!response.ok) {
-    throw new Error(data.message || 'Something went wrong');
+    if (!response.ok) {
+      throw new Error(data.message || 'Something went wrong');
+    }
+
+    return data;
+  } catch (error) {
+    throw new Error(error.message || 'Unable to connect to the server.');
   }
-
-  return data;
 }
 
 function getQueryParam(name) {
@@ -86,7 +107,7 @@ function renderUserPill() {
   const user = getUser();
 
   if (user && $('#userPill').length) {
-    $('#userPill').text(`${user.avatar} ${user.name}`);
+    $('#userPill').text(`${user.avatar || '👤'} ${user.name}`);
   }
 }
 
@@ -98,8 +119,8 @@ function createAvatarMarkup(users) {
   return `
     <div class="avatar-row">
       ${users.map((user) => `
-        <div class="avatar-circle" style="background:${user.avatarColor};" title="${user.name}">
-          ${user.avatar}
+        <div class="avatar-circle" style="background:${escapeHtml(user.avatarColor || '#00f5ff')};" title="${escapeHtml(user.name)}">
+          ${escapeHtml(user.avatar || '👤')}
         </div>
       `).join('')}
     </div>
@@ -108,12 +129,12 @@ function createAvatarMarkup(users) {
 
 function renderTaskCard(task) {
   return `
-    <article class="task-card priority-${task.priority}" draggable="true" data-task-id="${task._id}">
-      <h3>${task.title}</h3>
+    <article class="task-card priority-${escapeHtml(task.priority)}" draggable="true" data-task-id="${escapeHtml(task._id)}">
+      <h3>${escapeHtml(task.title)}</h3>
       <div class="task-meta">
-        <span class="priority-badge">${task.priority}</span>
-        <span class="date-badge">${formatDate(task.dueDate)}</span>
-        <span class="comment-badge">💬 ${task.commentCount || 0}</span>
+        <span class="priority-badge">${escapeHtml(task.priority)}</span>
+        <span class="date-badge">${escapeHtml(formatDate(task.dueDate))}</span>
+        <span class="comment-badge">💬 ${Number(task.commentCount || 0)}</span>
       </div>
       ${createAvatarMarkup(task.assignedTo)}
     </article>
@@ -137,9 +158,9 @@ function renderComments(comments) {
 
   $('#commentList').html(comments.map((comment) => `
     <article class="comment-card">
-      <strong>${comment.authorId.name}</strong>
-      <span class="comment-time">${formatDateTime(comment.createdAt)}</span>
-      <p>${comment.content}</p>
+      <strong>${escapeHtml(comment.authorId ? comment.authorId.name : 'Unknown user')}</strong>
+      <span class="comment-time">${escapeHtml(formatDateTime(comment.createdAt))}</span>
+      <p>${escapeHtml(comment.content)}</p>
     </article>
   `).join(''));
 }
@@ -152,8 +173,8 @@ function renderActivity(activity) {
 
   $('#activityList').html(activity.map((item) => `
     <article class="activity-card">
-      <span class="activity-time">${formatDateTime(item.createdAt)}</span>
-      <p>${item.userId.name} ${item.details}</p>
+      <span class="activity-time">${escapeHtml(formatDateTime(item.createdAt))}</span>
+      <p>${escapeHtml(item.userId ? item.userId.name : 'System')} ${escapeHtml(item.details)}</p>
     </article>
   `).join(''));
 }
@@ -165,10 +186,10 @@ async function loadProjectsForWorkspace(workspaceId) {
   $('#projectCount').text(projects.length);
 
   $('#projectList').html(projects.length ? projects.map((project) => `
-    <article class="project-card" data-project-id="${project._id}">
-      <h3>${project.name}</h3>
-      <p class="muted-text">${project.description || 'No description added.'}</p>
-      <span class="role-badge">${project.status}</span>
+    <article class="project-card" data-project-id="${escapeHtml(project._id)}">
+      <h3>${escapeHtml(project.name)}</h3>
+      <p class="muted-text">${escapeHtml(project.description || 'No description added.')}</p>
+      <span class="role-badge">${escapeHtml(project.status)}</span>
     </article>
   `).join('') : '<p class="muted-text">No projects found.</p>');
 }
@@ -178,13 +199,14 @@ async function loadDashboard() {
     const workspaceData = await apiCall('/workspaces');
     const taskData = await apiCall('/users/my-tasks');
     const workspaces = workspaceData.workspaces || [];
+    const currentUser = getUser();
 
     $('#workspaceCount').text(workspaces.length);
     $('#myTaskCount').text((taskData.tasks || []).length);
 
     $('#projectWorkspaceInput').html(`
       <option value="">Choose workspace</option>
-      ${workspaces.map((workspace) => `<option value="${workspace._id}">${workspace.name}</option>`).join('')}
+      ${workspaces.map((workspace) => `<option value="${escapeHtml(workspace._id)}">${escapeHtml(workspace.name)}</option>`).join('')}
     `);
 
     if (!workspaces.length) {
@@ -198,13 +220,15 @@ async function loadDashboard() {
     $('#projectWorkspaceInput').val(selectedWorkspaceId);
 
     $('#workspaceList').html(workspaces.map((workspace) => {
-      const currentMember = workspace.members.find((member) => member.userId._id === getUser().id);
+      const currentMember = workspace.members.find((member) => {
+        return currentUser && member.userId && member.userId._id === currentUser.id;
+      });
 
       return `
-        <article class="workspace-card" data-workspace-id="${workspace._id}">
-          <h3>${workspace.name}</h3>
-          <p class="muted-text">${workspace.description || 'No description added.'}</p>
-          <span class="role-badge">${currentMember ? currentMember.role : 'member'}</span>
+        <article class="workspace-card" data-workspace-id="${escapeHtml(workspace._id)}">
+          <h3>${escapeHtml(workspace.name)}</h3>
+          <p class="muted-text">${escapeHtml(workspace.description || 'No description added.')}</p>
+          <span class="role-badge">${escapeHtml(currentMember ? currentMember.role : 'member')}</span>
         </article>
       `;
     }).join(''));
@@ -220,8 +244,8 @@ async function createWorkspace(event) {
 
   try {
     const data = await apiCall('/workspaces', 'POST', {
-      name: $('#workspaceNameInput').val(),
-      description: $('#workspaceDescriptionInput').val()
+      name: $('#workspaceNameInput').val().trim(),
+      description: $('#workspaceDescriptionInput').val().trim()
     });
 
     selectedWorkspaceId = data.workspace._id;
@@ -246,8 +270,8 @@ async function createProject(event) {
     }
 
     await apiCall(`/workspaces/${workspaceId}/projects`, 'POST', {
-      name: $('#projectNameInput').val(),
-      description: $('#projectDescriptionInput').val(),
+      name: $('#projectNameInput').val().trim(),
+      description: $('#projectDescriptionInput').val().trim(),
       color: $('#projectColorInput').val(),
       status: $('#projectStatusInput').val()
     });
@@ -273,7 +297,12 @@ async function loadWorkspaceBoard() {
     }
 
     const taskData = await apiCall(`/projects/${projectId}/tasks`);
-    const groups = taskData.tasks;
+    const groups = taskData.tasks || {
+      todo: [],
+      in_progress: [],
+      review: [],
+      done: []
+    };
 
     populateTaskColumn('#todoList', groups.todo);
     populateTaskColumn('#progressList', groups.in_progress);
@@ -301,8 +330,8 @@ async function createTask(event) {
     }
 
     await apiCall(`/projects/${projectId}/tasks`, 'POST', {
-      title: $('#newTaskTitle').val(),
-      description: $('#newTaskDescription').val(),
+      title: $('#newTaskTitle').val().trim(),
+      description: $('#newTaskDescription').val().trim(),
       status: $('#newTaskStatus').val(),
       priority: $('#newTaskPriority').val()
     });
@@ -330,12 +359,12 @@ async function renderAssigneeList(task) {
 
       return `
         <label class="assignee-option">
-          <input type="checkbox" class="assignee-checkbox" value="${user._id}" ${isChecked ? 'checked' : ''}>
-          <span>${user.avatar} ${user.name} — ${member.role}</span>
+          <input type="checkbox" class="assignee-checkbox" value="${escapeHtml(user._id)}" ${isChecked ? 'checked' : ''}>
+          <span>${escapeHtml(user.avatar || '👤')} ${escapeHtml(user.name)} — ${escapeHtml(member.role)}</span>
         </label>
       `;
     }).join(''));
-  } catch (error) {
+  } catch {
     $('#assigneeList').html('<p class="muted-text">Could not load workspace members.</p>');
   }
 }
@@ -377,8 +406,8 @@ async function updateTaskDetail() {
     const taskId = getQueryParam('taskId');
 
     await apiCall(`/tasks/${taskId}`, 'PUT', {
-      title: $('#taskTitleInput').val(),
-      description: $('#taskDescriptionInput').val(),
+      title: $('#taskTitleInput').val().trim(),
+      description: $('#taskDescriptionInput').val().trim(),
       status: $('#taskStatusInput').val(),
       priority: $('#taskPriorityInput').val(),
       assignedTo: getSelectedAssignees()
@@ -473,7 +502,7 @@ $(document).ready(() => {
 
     try {
       const data = await apiCall('/auth/login', 'POST', {
-        email: $('#loginEmail').val(),
+        email: $('#loginEmail').val().trim(),
         password: $('#loginPassword').val()
       });
 
@@ -489,8 +518,8 @@ $(document).ready(() => {
 
     try {
       const data = await apiCall('/auth/register', 'POST', {
-        name: $('#registerName').val(),
-        email: $('#registerEmail').val(),
+        name: $('#registerName').val().trim(),
+        email: $('#registerEmail').val().trim(),
         password: $('#registerPassword').val()
       });
 
@@ -512,11 +541,11 @@ $(document).ready(() => {
   });
 
   $(document).on('click', '.project-card', function () {
-    window.location.href = `workspace.html?projectId=${$(this).data('project-id')}`;
+    window.location.href = `workspace.html?projectId=${encodeURIComponent($(this).data('project-id'))}`;
   });
 
   $(document).on('click', '.task-card', function () {
-    window.location.href = `task.html?taskId=${$(this).data('task-id')}`;
+    window.location.href = `task.html?taskId=${encodeURIComponent($(this).data('task-id'))}`;
   });
 
   $(document).on('dragstart', '.task-card', function () {

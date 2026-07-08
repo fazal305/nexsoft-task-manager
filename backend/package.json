@@ -5,13 +5,17 @@
   "main": "server.js",
   "scripts": {
     "dev": "nodemon server.js",
-    "start": "node server.js"
+    "start": "node server.js",
+    "check": "node --check server.js"
   },
   "keywords": [
     "task-management",
     "express",
     "mongodb",
-    "jwt"
+    "jwt",
+    "kanban",
+    "nexsoft",
+    "fazal-labs"
   ],
   "author": "Fazal Abbas",
   "license": "MIT",
