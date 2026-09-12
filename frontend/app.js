@@ -73,6 +73,17 @@ async function apiCall(endpoint, method = 'GET', body = null) {
     const data = await response.json();
 
     if (!response.ok) {
+      if (response.status === 401 && token) {
+        localStorage.removeItem('taskflowToken');
+        localStorage.removeItem('taskflowUser');
+        window.location.href = 'index.html';
+        throw new Error('Your session has expired — please log in again');
+      }
+
+      if (response.status === 403) {
+        throw new Error("You don't have permission to do that");
+      }
+
       throw new Error(data.message || 'Something went wrong');
     }
 
