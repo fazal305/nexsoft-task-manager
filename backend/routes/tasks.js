@@ -239,12 +239,9 @@ router.delete("/tasks/:id", async (req, res) => {
     const isCreator = task.createdBy.toString() === req.user._id.toString();
 
     if (!role || (!canManage(role) && !isCreator)) {
-      return res
-        .status(403)
-        .json({
-          message:
-            "Only managers, owners, or task creators can delete this task",
-        });
+      return res.status(403).json({
+        message: "Only managers, owners, or task creators can delete this task",
+      });
     }
 
     await Comment.deleteMany({ taskId: task._id });
