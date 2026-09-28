@@ -1,31 +1,33 @@
-const express = require('express');
-const Workspace = require('../models/Workspace');
-const User = require('../models/User');
-const authMiddleware = require('../middleware/authMiddleware');
-const { requireRole } = require('../middleware/roleMiddleware');
+const express = require("express");
+const Workspace = require("../models/Workspace");
+const User = require("../models/User");
+const authMiddleware = require("../middleware/authMiddleware");
+const { requireRole } = require("../middleware/roleMiddleware");
 
 const router = express.Router();
 
 router.use(authMiddleware);
 
-router.get('/', async (req, res) => {
+router.get("/", async (req, res) => {
   try {
     const workspaces = await Workspace.find({
-      'members.userId': req.user._id
-    }).populate('members.userId', 'name email avatar avatarColor');
+      "members.userId": req.user._id,
+    }).populate("members.userId", "name email avatar avatarColor");
 
     res.json({ workspaces });
   } catch (error) {
-    res.status(500).json({ message: 'Failed to load workspaces', error: error.message });
+    res
+      .status(500)
+      .json({ message: "Failed to load workspaces", error: error.message });
   }
 });
 
-router.post('/', async (req, res) => {
+router.post("/", async (req, res) => {
   try {
     const { name, description } = req.body;
 
     if (!name) {
-      return res.status(400).json({ message: 'Workspace name is required' });
+      return res.status(400).json({ message: "Workspace name is required" });
     }
 
     const workspace = await Workspace.create({
@@ -35,27 +37,31 @@ router.post('/', async (req, res) => {
       members: [
         {
           userId: req.user._id,
-          role: 'owner'
-        }
-      ]
+          role: "owner",
+        },
+      ],
     });
 
     res.status(201).json({
-      message: 'Workspace created successfully',
-      workspace
+      message: "Workspace created successfully",
+      workspace,
     });
   } catch (error) {
-    res.status(500).json({ message: 'Failed to create workspace', error: error.message });
+    res
+      .status(500)
+      .json({ message: "Failed to create workspace", error: error.message });
   }
 });
 
-router.get('/:id', async (req, res) => {
+router.get("/:id", async (req, res) => {
   try {
-    const workspace = await Workspace.findById(req.params.id)
-      .populate('members.userId', 'name email avatar avatarColor');
+    const workspace = await Workspace.findById(req.params.id).populate(
+      "members.userId",
+      "name email avatar avatarColor",
+    );
 
     if (!workspace) {
-      return res.status(404).json({ message: 'Workspace not found' });
+      return res.status(404).json({ message: "Workspace not found" });
     }
 
     const isMember = workspace.members.some((member) => {
@@ -63,56 +69,66 @@ router.get('/:id', async (req, res) => {
     });
 
     if (!isMember) {
-      return res.status(403).json({ message: 'You are not a member of this workspace' });
+      return res
+        .status(403)
+        .json({ message: "You are not a member of this workspace" });
     }
 
     res.json({ workspace });
   } catch (error) {
-    res.status(500).json({ message: 'Failed to load workspace', error: error.message });
+    res
+      .status(500)
+      .json({ message: "Failed to load workspace", error: error.message });
   }
 });
 
-router.put('/:id', requireRole('manager'), async (req, res) => {
+router.put("/:id", requireRole("manager"), async (req, res) => {
   try {
     const { name, description } = req.body;
 
     const workspace = await Workspace.findByIdAndUpdate(
       req.params.id,
       { name, description },
-      { new: true }
+      { new: true },
     );
 
     res.json({
-      message: 'Workspace updated successfully',
-      workspace
+      message: "Workspace updated successfully",
+      workspace,
     });
   } catch (error) {
-    res.status(500).json({ message: 'Failed to update workspace', error: error.message });
+    res
+      .status(500)
+      .json({ message: "Failed to update workspace", error: error.message });
   }
 });
 
-router.delete('/:id', requireRole('owner'), async (req, res) => {
+router.delete("/:id", requireRole("owner"), async (req, res) => {
   try {
     await Workspace.findByIdAndDelete(req.params.id);
 
-    res.json({ message: 'Workspace deleted successfully' });
+    res.json({ message: "Workspace deleted successfully" });
   } catch (error) {
-    res.status(500).json({ message: 'Failed to delete workspace', error: error.message });
+    res
+      .status(500)
+      .json({ message: "Failed to delete workspace", error: error.message });
   }
 });
 
-router.post('/:id/invite', requireRole('manager'), async (req, res) => {
+router.post("/:id/invite", requireRole("manager"), async (req, res) => {
   try {
     const { email, role } = req.body;
 
     if (!email || !role) {
-      return res.status(400).json({ message: 'Email and role are required' });
+      return res.status(400).json({ message: "Email and role are required" });
     }
 
     const invitedUser = await User.findOne({ email });
 
     if (!invitedUser) {
-      return res.status(404).json({ message: 'User not found with this email' });
+      return res
+        .status(404)
+        .json({ message: "User not found with this email" });
     }
 
     const workspace = req.workspace;
@@ -122,75 +138,93 @@ router.post('/:id/invite', requireRole('manager'), async (req, res) => {
     });
 
     if (alreadyMember) {
-      return res.status(409).json({ message: 'User is already a workspace member' });
+      return res
+        .status(409)
+        .json({ message: "User is already a workspace member" });
     }
 
     workspace.members.push({
       userId: invitedUser._id,
-      role
+      role,
     });
 
     await workspace.save();
 
     res.json({
-      message: 'Member invited successfully',
-      workspace
+      message: "Member invited successfully",
+      workspace,
     });
   } catch (error) {
-    res.status(500).json({ message: 'Failed to invite member', error: error.message });
+    res
+      .status(500)
+      .json({ message: "Failed to invite member", error: error.message });
   }
 });
 
-router.put('/:id/members/:userId/role', requireRole('owner'), async (req, res) => {
-  try {
-    const { role } = req.body;
-    const workspace = req.workspace;
+router.put(
+  "/:id/members/:userId/role",
+  requireRole("owner"),
+  async (req, res) => {
+    try {
+      const { role } = req.body;
+      const workspace = req.workspace;
 
-    if (workspace.owner.toString() === req.params.userId) {
-      return res.status(400).json({ message: 'Owner role cannot be changed' });
+      if (workspace.owner.toString() === req.params.userId) {
+        return res
+          .status(400)
+          .json({ message: "Owner role cannot be changed" });
+      }
+
+      const member = workspace.members.find((workspaceMember) => {
+        return workspaceMember.userId.toString() === req.params.userId;
+      });
+
+      if (!member) {
+        return res.status(404).json({ message: "Member not found" });
+      }
+
+      member.role = role;
+      await workspace.save();
+
+      res.json({
+        message: "Member role updated successfully",
+        workspace,
+      });
+    } catch (error) {
+      res
+        .status(500)
+        .json({ message: "Failed to update role", error: error.message });
     }
+  },
+);
 
-    const member = workspace.members.find((workspaceMember) => {
-      return workspaceMember.userId.toString() === req.params.userId;
-    });
+router.delete(
+  "/:id/members/:userId",
+  requireRole("manager"),
+  async (req, res) => {
+    try {
+      const workspace = req.workspace;
 
-    if (!member) {
-      return res.status(404).json({ message: 'Member not found' });
+      if (workspace.owner.toString() === req.params.userId) {
+        return res.status(400).json({ message: "Owner cannot be removed" });
+      }
+
+      workspace.members = workspace.members.filter((member) => {
+        return member.userId.toString() !== req.params.userId;
+      });
+
+      await workspace.save();
+
+      res.json({
+        message: "Member removed successfully",
+        workspace,
+      });
+    } catch (error) {
+      res
+        .status(500)
+        .json({ message: "Failed to remove member", error: error.message });
     }
-
-    member.role = role;
-    await workspace.save();
-
-    res.json({
-      message: 'Member role updated successfully',
-      workspace
-    });
-  } catch (error) {
-    res.status(500).json({ message: 'Failed to update role', error: error.message });
-  }
-});
-
-router.delete('/:id/members/:userId', requireRole('manager'), async (req, res) => {
-  try {
-    const workspace = req.workspace;
-
-    if (workspace.owner.toString() === req.params.userId) {
-      return res.status(400).json({ message: 'Owner cannot be removed' });
-    }
-
-    workspace.members = workspace.members.filter((member) => {
-      return member.userId.toString() !== req.params.userId;
-    });
-
-    await workspace.save();
-
-    res.json({
-      message: 'Member removed successfully',
-      workspace
-    });
-  } catch (error) {
-    res.status(500).json({ message: 'Failed to remove member', error: error.message });
-  }
-});
+  },
+);
 
 module.exports = router;
